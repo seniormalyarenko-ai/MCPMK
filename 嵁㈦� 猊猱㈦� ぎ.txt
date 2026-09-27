@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#5B8DEF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="МЦПМК">
+<title>МЦПМК</title>
+<style>
+:root{
+  --blue:#5B8DEF;--blue2:#7FC8F8;--green:#4CAF7D;
+  --bg:#F5F8FC;--card:#fff;--text:#1F2A44;--muted:#7A8AA0;
+  --red:#E5484D;--yellow:#F5A623;--border:#E4EBF5;
+  --r:16px;--sh:0 2px 10px rgba(91,141,239,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg);color:var(--text);font-size:15px;line-height:1.4;
+  padding-bottom:72px;overflow-x:hidden;
+}
+@media(min-width:900px){body{padding-bottom:0;padding-left:240px}}
+#login{
+  position:fixed;inset:0;z-index:9999;
+  background:linear-gradient(135deg,#5B8DEF,#7FC8F8);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+#login .box{
+  background:#fff;border-radius:24px;padding:36px 26px;width:100%;max-width:340px;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center;
+}
+#login h1{font-size:34px;color:var(--blue);margin-bottom:6px;letter-spacing:2px}
+#login p{color:var(--muted);margin-bottom:22px;font-size:13px}
+#login input{
+  width:100%;padding:14px;border:2px solid var(--border);border-radius:12px;
+  font-size:20px;text-align:center;letter-spacing:6px;margin-bottom:14px;
+}
+#login input:focus{outline:none;border-color:var(--blue)}
+#login button{
+  width:100%;padding:14px;background:var(--blue);color:#fff;border:none;
+  border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;
+}
+#login button:active{background:#4A7BD8}
+#login .err{color:var(--red);font-size:13px;margin-top:10px;height:16px}
+#sidebar{
+  display:none;position:fixed;left:0;top:0;bottom:0;width:240px;
+  background:#fff;border-right:1px solid var(--border);padding:20px 0;z-index:100;
+  overflow-y:auto;
+}
+@media(min-width:900px){#sidebar{display:block}}
+#sidebar .logo{padding:0 24px 20px;font-size:22px;font-weight:700;color:var(--blue);letter-spacing:1px}
+#sidebar a{
+  display:flex;align-items:center;gap:12px;padding:12px 24px;color:var(--text);
+  text-decoration:none;font-size:15px;cursor:pointer;border-left:3px solid transparent;
+}
+#sidebar a:hover{background:var(--bg)}
+#sidebar a.active{background:#EEF4FE;border-left-color:var(--blue);color:var(--blue);font-weight:600}
+#bottomnav{
+  position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);
+  display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);
+}
+@media(min-width:900px){#bottomnav{display:none}}
+#bottomnav a{
+  flex:1;text-align:center;padding:8px 2px;color:var(--muted);text-decoration:none;
+  font-size:10px;cursor:pointer;
+}
+#bottomnav a.active{color:var(--blue)}
+#bottomnav a .ico{font-size:20px;display:block;margin-bottom:2px}
+#app{padding:16px;max-width:1100px;margin:0 auto}
+@media(min-width:900px){#app{padding:24px}}
+.page{display:none}
+.page.active{display:block}
+h2.title{font-size:24px;margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:14px;margin-bottom:18px}
+.card{background:var(--card);border-radius:var(--r);padding:18px;box-shadow:var(--sh);margin-bottom:14px}
+.card h3{font-size:16px;margin-bottom:12px}
+.progress{height:8px;background:#EEF2F8;border-radius:4px;overflow:hidden;margin:8px 0}
+.progress .bar{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2));border-radius:4px;transition:width .4s}
+.progress .bar.green{background:linear-gradient(90deg,var(--green),#6FCF97)}
+.planrow{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px;gap:6px;flex-wrap:wrap}
+.planrow b{color:var(--text)}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.kpi .item{background:var(--card);border-radius:12px;padding:12px 6px;text-align:center;box-shadow:var(--sh)}
+.kpi .num{font-size:22px;font-weight:7/* ---------- СВОДКА РУКОВОДИТЕЛЯ ---------- */
+function renderSummary(){
+  const d = new Date();
+  const dateStr = d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',weekday:'long'});
+  const today = todayStr();
+  const newToday = DB.deals.filter(x=>x.createdAt && x.createdAt.slice(0,10)===today).length;
+  const kp = DB.deals.filter(x=>x.status==='КП отправлено').length;
+  const paid = DB.deals.filter(x=>x.status==='Оплачено').length;
+  const overdue = DB.tasks.filter(t=>!t.done && isOverdueTime(t.time)).length;
+
+  const eduPlan = DB.plans['Обучение']?.plan||0;
+  const eduFact = dirFact('Обучение');
+  const eduPct = eduPlan ? Math.min(Math.round(eduFact/eduPlan*100),100) : 0;
+
+  const jurPlan = DB.plans['Юрсопровождение']?.plan||0;
+  const jurFact = dirFact('Юрсопровождение');
+  const jurPct = jurPlan ? Math.min(Math.round(jurFact/jurPlan*100),100) : 0;
+
+  const totalPlan = eduPlan + jurPlan;
+  const totalFact = eduFact + jurFact;
+  const totalPct = totalPlan ? Math.min(Math.round(totalFact/totalPlan*100),100) : 0;
+
+  const teamTop = DB.team.map(m=>{
+    const sum = DB.deals.filter(x=>x.manager===m.name && x.status==='Оплачено')
+      .reduce((s,x)=>s+Number(x.sum||0),0);
+    return {name:m.name, sum};
+  }).sort((a,b)=>b.sum-a.sum).slice(0,3);
+
+  const alerts = [];
+  if(overdue) alerts.push(${overdue} просроченных задач);
+  const zeroAction = DB.team.filter(m=>{
+    const actions = DB.deals.filter(x=>x.manager===m.name && x.updatedAt && x.updatedAt.slice(0,10)===today).length;
+    return actions===0 && m.role==='Менеджер';
+  }).map(m=>m.name);
+  if(zeroAction.length) alerts.push(${zeroAction.slice(0,3).join(', ')} — 0 действий);
+
+  document.getElementById('page-summary').innerHTML =     <h2 class="title">Сводка руководителя</h2>     <div class="subtitle">${dateStr}</div>     <div class="card">       <h3>Обучение медработников</h3>       <div class="progress"><div class="bar" style="width:${eduPct}%"></div></div>       <div class="planrow">         <span>План: <b>${fmt(eduPlan)} ₽</b></span>         <span>Факт: <b>${fmt(eduFact)} ₽</b></span>         <span><b>${eduPct}%</b></span>       </div>     </div>     <div class="card">       <h3>Юрсопровождение клиник</h3>       <div class="progress"><div class="bar" style="width:${jurPct}%"></div></div>       <div class="planrow">         <span>План: <b>${fmt(jurPlan)} ₽</b></span>         <span>Факт: <b>${fmt(jurFact)} ₽</b></span>         <span><b>${jurPct}%</b></span>       </div>     </div>     <div class="card">       <h3>Итого по отделу</h3>       <div class="progress"><div class="bar green" style="width:${totalPct}%"></div></div>       <div class="planrow">         <span>План: <b>${fmt(totalPlan)} ₽</b></span>         <span>Факт: <b>${fmt(totalFact)} ₽</b></span>         <span><b>${totalPct}%</b></span>       </div>     </div>     <h3 style="margin:18px 0 10px;font-size:15px">Сегодня</h3>     <div class="kpi">       <div class="item"><div class="num">${newToday||DB.deals.length}</div><div class="lbl">новых</div></div>       <div class="item"><div class="num">${kp}</div><div class="lbl">КП</div></div>       <div class="item"><div class="num green">${paid}</div><div class="lbl">оплачено</div></div>       <div class="item"><div class="num ${overdue?'red':''}">${overdue}</div><div class="lbl">просроч.</div></div>     </div>     <div class="card">       <h3>Топ-3 менеджера</h3>       ${teamTop.map((m,i)=>
+        <div class="row">
+          <div class="left"><div class="name">${i+1}. ${m.name}</div></div>
+          <div class="right">${fmt(m.sum)} ₽</div>
+        </div>
+      ).join('')}     </div>     <div class="card">       <h3>⚠️ Тревога</h3>       ${alerts.length ? alerts.map(a=><div class="alert">${a}</div>).join('') : '<div class="alert green">Всё под контролем</div>'}       ${!DB.deals.length ? '<div class="alert yellow">Пока нет заявок — нажмите + чтобы добавить первую</div>' : ''}     </div>     <div class="card">       <h3>Мои задачи сегодня</h3>       ${DB.tasks.map(t=>
+        <div class="task ${t.done?'done':''}">
